@@ -1,10 +1,11 @@
-<div align="center">
-
-# SummerTime
-
+<h1 align="center">SummerTime</h1>
+<p align="center">
+ 
 ![Summer Afternoon scene](screenshots/screenshot.png)
 
-</div>
+</p>
+
+
 
 A rewritten vanilla TypeScript port of **Summer Afternoon**, the
 WebGL art experiment by [Vicente Lucendo](https://summer-afternoon.vlucendo.com),
