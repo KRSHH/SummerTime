@@ -1,5 +1,5 @@
 // Minimal typed event bus. Port of the original eventemitter3-based `events`
-// singleton — same event names and semantics, no dependency.
+// singleton, same event names and semantics, no dependency.
 
 type Handler = (...args: any[]) => void;
 

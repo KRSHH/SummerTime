@@ -1,7 +1,7 @@
 // The scene's shared material: one ShaderMaterial with per-object `defines`
 // that switch in vertex/fragment features (grass bending, terrain masks,
 // wind shake, toon ramps, character skinning...). The GLSL is byte-for-byte
-// the original — extracted verbatim into src/scene/glsl/.
+// the original, extracted verbatim into src/scene/glsl/.
 //
 // Also contains the cascaded-shadow-map (CSM) trick: three.js's
 // lights_fragment_begin chunk is rewritten so every light's shadow term is

@@ -7,7 +7,7 @@
 //    client state (field numbers assigned by insertion order of `data`).
 //
 // A minimal proto3 wire codec is implemented here (varint / fixed32 /
-// length-delimited) — no protobuf dependency needed.
+// length-delimited), no protobuf dependency needed.
 
 import { events } from '../../core/events';
 
@@ -353,7 +353,7 @@ export class RealmConnection {
   private _onVisibility = (visible: boolean) => { if (!visible) this._onClose(); else if (!this._connected && !this._retryTimeout) this._createSocket(); };
 
   private _sendRelayedData(data: RealmData) {
-    // protobuf payload only — the server prepends the 2-byte sender id
+    // protobuf payload only, the server prepends the 2-byte sender id
     const payload = encodeMessage(data, this._dataTypes, Object.keys(this._data));
     this._socket.send(payload);
   }

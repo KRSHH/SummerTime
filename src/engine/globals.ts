@@ -191,7 +191,7 @@ class Engine {
     el.style.top = '0';
     el.style.left = '0';
 
-    // The original hides the canvas inside a closed shadow root — the DOM
+    // The original hides the canvas inside a closed shadow root, the DOM
     // shows nothing (screenshot tools / querySelector find no canvas).
     const host = document.createElement('div');
     host.attachShadow({ mode: 'closed' }).append(el);

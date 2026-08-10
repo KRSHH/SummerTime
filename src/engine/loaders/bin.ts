@@ -11,7 +11,7 @@
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import type { BufferGeometry } from 'three';
 
-/** TypedArray constructor names — the DRACOLoader worker resolves them via
+/** TypedArray constructor names, the DRACOLoader worker resolves them via
  *  `self[name]`, and only strings survive postMessage. */
 export const TYPED_ARRAYS = [
   'Int8Array',

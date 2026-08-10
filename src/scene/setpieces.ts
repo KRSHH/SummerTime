@@ -1,4 +1,4 @@
-// Set pieces and easter eggs: ufo, alien, sign, cats, sloth, gossip —
+// Set pieces and easter eggs: ufo, alien, sign, cats, sloth, gossip,
 // skinned animated characters and interactable secrets (the hidden
 // easter-egg modal triggers).
 

@@ -360,7 +360,7 @@ export class FollowCamera extends PerspectiveCamera {
   }
 
   // Orbit-style touch input is disabled on the follow camera in the original
-  // (enableRotate/enablePan/enableZoom = false), so handlers are no-ops —
+  // (enableRotate/enablePan/enableZoom = false), so handlers are no-ops,
   // kept as listeners for API parity.
   private _touchStart = () => {};
   private _onWheel = () => {};

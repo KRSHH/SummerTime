@@ -54,7 +54,7 @@ export function ease(t: number, name: string): number {
   }
 }
 
-/** Shortest-angle version of `to` relative to `from` — returns an ANGLE near
+/** Shortest-angle version of `to` relative to `from`, returns an ANGLE near
  *  `to` but in `from`'s revolution (original semantics: `from + diff`). */
 export function getShortestRotationAngle(from: number, to: number): number {
   let diff = (to - from) % TWO_PI;

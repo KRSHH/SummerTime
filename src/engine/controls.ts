@@ -16,7 +16,7 @@ import { globalUBODeclaration } from '../scene/materials';
 import blendmodesGLSL from '../scene/glsl/blendmodes.glsl?raw';
 
 // ---------------------------------------------------------------------------
-// The "circles" UI — an on-screen joystick rendered with a custom shader
+// The "circles" UI, an on-screen joystick rendered with a custom shader
 // ---------------------------------------------------------------------------
 
 
