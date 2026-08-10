@@ -7,7 +7,7 @@ const closeIcon = '<svg viewBox="0 0 18 18" aria-hidden="true"><path d="m1.5 1.5
 
 const infoContent = {
   about: {
-    title: 'Summer Afternoon',
+    title: 'SummerTime',
     paragraphs: [
       'This is a web experiment I made to practice some procedural 3D art. There are 5 secrets hidden across it. I hope you can find them!',
       'Thanks to Ana and Michael for their tips.',

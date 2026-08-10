@@ -1,9 +1,9 @@
 {
-  "name": "summer-afternoon-port",
+  "name": "summertime-port",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "A clean vanilla TypeScript port of Summer Afternoon.",
+  "description": "A clean vanilla TypeScript port of SummerTime.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
