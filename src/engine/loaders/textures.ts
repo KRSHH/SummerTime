@@ -12,9 +12,11 @@ import {
   sRGBEncoding,
   Texture,
   TextureLoader as ThreeTextureLoader,
+  VideoTexture,
 } from 'three';
 import type { WebGLRenderer } from 'three';
 import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
+import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js';
 import { deferred, type Deferred } from '../../core/deferred';
 
 const DEFAULT_TEXTURE = 'uv/uvchecker-srgb.png';
@@ -26,8 +28,10 @@ export interface LoadedTexture extends Texture {
   _loaded: Deferred<void>;
 }
 
-const ktx2Loader = new KTX2Loader().setTranscoderPath('/assets/libs/basis/');
+const asset = (path: string) => new URL(path, window.location.href).toString();
+const ktx2Loader = new KTX2Loader().setTranscoderPath(asset('assets/libs/basis/'));
 const imageLoader = new ThreeTextureLoader();
+const exrLoader = new EXRLoader();
 const cache = new Map<string, LoadedTexture>();
 
 /** Must be called once with the renderer to enable compressed textures. */
@@ -52,7 +56,7 @@ export const textureLoader = {
     } else if (ext.startsWith('exr')) {
       texture = new (DataTexture as any)() as LoadedTexture;
     } else if (ext.startsWith('mp4') || ext.startsWith('webm')) {
-      throw new Error(`video textures not ported: ${url}`);
+      texture = new Texture() as LoadedTexture;
     } else {
       texture = new Texture() as LoadedTexture;
     }
@@ -63,26 +67,22 @@ export const textureLoader = {
     texture.encoding = modeLower.includes('srgb') ? sRGBEncoding : texture.encoding;
     cache.set(key, texture);
 
-    const fullUrl = /^https?:\/\//.test(url) ? url : `/assets/images/${url}`;
+    const fullUrl = /^https?:\/\//.test(url) ? url : asset('assets/images/' + url);
 
     setTimeout(async () => {
       let loaded: Texture | null = null;
       try {
-        if (ext.startsWith('ktx2')) {
-          loaded = await ktx2Loader.loadAsync(fullUrl);
-        } else {
-          loaded = await imageLoader.loadAsync(fullUrl);
-        }
+        if (ext.startsWith('ktx2')) loaded = await ktx2Loader.loadAsync(fullUrl);
+        else if (ext.startsWith('exr')) loaded = await exrLoader.loadAsync(fullUrl);
+        else if (ext.startsWith('mp4') || ext.startsWith('webm')) { const video = document.createElement('video'); video.src = fullUrl; video.muted = true; video.loop = true; video.playsInline = true; await new Promise<void>((resolve, reject) => { video.addEventListener('loadeddata', () => resolve(), { once: true }); video.addEventListener('error', () => reject(new Error('video load failed')), { once: true }); video.load(); }); loaded = new VideoTexture(video); } else loaded = await imageLoader.loadAsync(fullUrl);
       } catch (err) {
         console.warn('Texture load:', err);
         // fallback to the uv-checker texture (original behavior)
         try {
           const fallback = ext.startsWith('ktx2') ? DEFAULT_TEXTURE_BASIS : DEFAULT_TEXTURE;
-          loaded = await (ext.startsWith('ktx2') ? ktx2Loader : imageLoader).loadAsync(
-            `/assets/images/${fallback}`,
-          );
+          loaded = await (ext.startsWith('ktx2') ? ktx2Loader : imageLoader).loadAsync(asset('assets/images/' + fallback));
         } catch {
-          loaded = null;
+          const fallbackTexture = new DataTexture(new Uint8Array([255, 0, 255, 255]), 1, 1); fallbackTexture.needsUpdate = true; loaded = fallbackTexture;
         }
       }
       if (loaded && loaded !== texture) texture.copy(loaded);

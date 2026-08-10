@@ -9,6 +9,8 @@
 // A minimal proto3 wire codec is implemented here (varint / fixed32 /
 // length-delimited) — no protobuf dependency needed.
 
+import { events } from '../../core/events';
+
 export type RealmData = Record<string, number[] | number | string | boolean | null>;
 
 export interface RealmClientData {
@@ -43,6 +45,7 @@ interface RealmOptions {
 const WIRE_VARINT = 0;
 const WIRE_FIXED32 = 5;
 const WIRE_LENGTH_DELIMITED = 2;
+const WIRE_FIXED64 = 1;
 
 function writeVarint(out: number[], value: number): void {
   let v = value >>> 0;
@@ -53,22 +56,21 @@ function writeVarint(out: number[], value: number): void {
   out.push(v);
 }
 
-function writeFloat(out: number[], value: number): void {
-  const buf = new DataView(new ArrayBuffer(4));
-  buf.setFloat32(0, value, true);
-  for (let i = 0; i < 4; i++) out.push(buf.getUint8(i));
-}
+function writeFloat(out: number[], value: number): void { const buf = new DataView(new ArrayBuffer(4)); buf.setFloat32(0, value, true); for (let i=0;i<4;i++) out.push(buf.getUint8(i)); }
+function writeDouble(out: number[], value: number): void { const buf = new DataView(new ArrayBuffer(8)); buf.setFloat64(0, value, true); for (let i=0;i<8;i++) out.push(buf.getUint8(i)); }
 
 function encodeMessage(
   data: RealmData,
   fieldTypes: Record<string, string>,
+  fieldNames: string[] = Object.keys(data),
 ): Uint8Array {
   const out: number[] = [];
-  const keys = Object.keys(data);
+  const keys = fieldNames;
   keys.forEach((name, index) => {
     const value = data[name];
     const field = index + 1;
     const type = fieldTypes[name] ?? '';
+    if (value === undefined || value === null) return;
     if (type === 'float' && Array.isArray(value)) {
       // packed repeated float
       const floats = value as number[];
@@ -79,14 +81,16 @@ function encodeMessage(
       writeVarint(out, (field << 3) | WIRE_VARINT);
       writeVarint(out, value);
     } else if (typeof value === 'number') {
-      writeVarint(out, (field << 3) | WIRE_FIXED32);
-      writeFloat(out, value);
+      writeVarint(out, (field << 3) | WIRE_FIXED64);
+      writeDouble(out, value);
     } else if (Array.isArray(value)) {
       // packed repeated float (default)
       const floats = value as number[];
       writeVarint(out, (field << 3) | WIRE_LENGTH_DELIMITED);
       writeVarint(out, floats.length * 4);
       for (const f of floats) writeFloat(out, f);
+    } else if (typeof value === 'boolean') {
+      writeVarint(out, (field << 3) | WIRE_VARINT); writeVarint(out, value ? 1 : 0);
     } else if (typeof value === 'string') {
       const bytes = new TextEncoder().encode(value);
       writeVarint(out, (field << 3) | WIRE_LENGTH_DELIMITED);
@@ -100,7 +104,8 @@ function encodeMessage(
 function decodeMessage(
   bytes: Uint8Array,
   fields: string[],
-): RealmClientData {
+  types: Record<string, string> = {},
+ ): RealmClientData {
   const result: RealmClientData = { p: [], r: [], a: 0 };
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   let pos = 0;
@@ -147,14 +152,16 @@ function decodeMessage(
         if ((b & 0x80) === 0) break;
         lenShift += 7;
       }
-      // packed floats
-      const count = len / 4;
-      const arr: number[] = [];
-      for (let i = 0; i < count; i++) {
-        arr.push(view.getFloat32(pos, true));
-        pos += 4;
+      if (types[name] === 'float' || name === 'p' || name === 'r') {
+        const count = len / 4; const arr: number[] = [];
+        for (let i = 0; i < count; i++) { arr.push(view.getFloat32(pos, true)); pos += 4; }
+        result[name] = arr;
+      } else {
+        result[name] = new TextDecoder().decode(bytes.slice(pos, pos + len)); pos += len;
       }
-      result[name] = arr;
+    } else if (wire === WIRE_FIXED64) {
+      result[name] = view.getFloat64(pos, true);
+      pos += 8;
     } else if (wire === WIRE_FIXED32) {
       result[name] = view.getFloat32(pos, true);
       pos += 4;
@@ -197,6 +204,9 @@ export class RealmConnection {
   private _retryTimeout: ReturnType<typeof setTimeout> | null = null;
   private _serverIndex = 0;
   private _serverFirstConnection = true;
+  private _inactiveDisconnect = false;
+  private _inactiveDisconnectTime = 300000;
+  private _dataUpdateTime = Date.now();
 
   private _onAddClient: (id: string, data: RealmClientData) => void;
   private _onRemoveClient: (id: string) => void;
@@ -213,8 +223,9 @@ export class RealmConnection {
     this._dataTypes = options.dataTypesOverwrite ?? {};
     this._updateRate = options.updateRate ?? 35;
     this._pingRate = options.pingRate ?? 30;
-    void options.inactiveDisconnect;
-    void options.inactiveDisconnectTime;
+    this._inactiveDisconnect = options.inactiveDisconnect ?? false;
+    this._inactiveDisconnectTime = (options.inactiveDisconnectTime ?? 300) * 1000;
+    events.on('visibility_change', this._onVisibility);
     this._onAddClient = options.addClient ?? noop;
     this._onRemoveClient = options.removeClient ?? noop;
     this._onRemoveAllClients = options.removeAllClients ?? noop;
@@ -244,9 +255,9 @@ export class RealmConnection {
     this._socket.onmessage = null;
     this._socket.onclose = null;
     this._socket.onerror = null;
-    if (this._pingInterval) clearInterval(this._pingInterval);
-    if (this._relayInterval) clearInterval(this._relayInterval);
-    if (this._retryTimeout) clearTimeout(this._retryTimeout);
+    if (this._pingInterval) { clearInterval(this._pingInterval); this._pingInterval = null; }
+    if (this._relayInterval) { clearInterval(this._relayInterval); this._relayInterval = null; }
+    if (this._retryTimeout) { clearTimeout(this._retryTimeout); this._retryTimeout = null; }
     this._socket.close();
     if (this._connected) {
       this._connected = false;
@@ -263,9 +274,9 @@ export class RealmConnection {
       if (typeof e.data !== 'string') {
         // binary: 2-byte client id + protobuf state
         const bytes = new Uint8Array(e.data as ArrayBuffer);
-        const clientId = bytes[0] | (bytes[1] << 8);
-        const state = decodeMessage(bytes.slice(2), Object.keys(this._data));
-        const existing = this._clients.get(String(clientId));
+        const clientId = new TextDecoder().decode(bytes.slice(0, 2));
+        const state = decodeMessage(bytes.slice(2), Object.keys(this._data), this._dataTypes);
+        const existing = this._clients.get(clientId);
         if (existing) {
           for (const key of Object.keys(state)) {
             if (Array.isArray(state[key]) && state[key].length === 0) continue;
@@ -278,8 +289,8 @@ export class RealmConnection {
           ).length;
           if (nonEmpty !== Object.keys(this._data).length) return;
           this._relay(true);
-          this._clients.set(String(clientId), state);
-          this._onAddClient(String(clientId), state);
+          this._clients.set(clientId, { ...this._data, ...state } as RealmClientData);
+          this._onAddClient(clientId, { ...this._data, ...state } as RealmClientData);
         }
         return;
       }
@@ -324,21 +335,26 @@ export class RealmConnection {
   }
 
   private _relay(force = false) {
+    if (this._inactiveDisconnect && Date.now() - this._dataUpdateTime > this._inactiveDisconnectTime) { this._onClose(); return; }
     if (force) {
       this._prevData = JSON.stringify(this._data);
       this._sendRelayedData({ ...this._data });
+      this._dataUpdateTime = Date.now();
       return;
     }
     const changed = this._retrieveChangedData();
     if (Object.keys(changed).length > 0) {
       this._prevData = JSON.stringify(this._data);
       this._sendRelayedData(changed);
+      this._dataUpdateTime = Date.now();
     }
   }
 
+  private _onVisibility = (visible: boolean) => { if (!visible) this._onClose(); else if (!this._connected && !this._retryTimeout) this._createSocket(); };
+
   private _sendRelayedData(data: RealmData) {
     // protobuf payload only — the server prepends the 2-byte sender id
-    const payload = encodeMessage(data, this._dataTypes);
+    const payload = encodeMessage(data, this._dataTypes, Object.keys(this._data));
     this._socket.send(payload);
   }
 

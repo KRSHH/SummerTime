@@ -33,7 +33,7 @@ html body #app {
 }
 @font-face {
   font-family: Stylish;
-  src: url(/assets/fonts/Stylish-Regular.woff2) format('woff2'), url(/assets/fonts/Stylish-Regular.woff) format('woff');
+  src: url(assets/fonts/Stylish-Regular.woff2) format('woff2'), url(assets/fonts/Stylish-Regular.woff) format('woff');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -63,6 +63,7 @@ html {
   align-items: center;
   align-content: center;
 }
+#loader.hidden { opacity: 0; pointer-events: none; }
 #loader h1 {
   font-family: var(--default-font);
   font-weight: normal;
@@ -149,7 +150,7 @@ html {
   position: relative;
   padding: 33px 90px 33px 40px;
   margin: 30px;
-  opacity: 0.0001;
+  opacity: 1;
   will-change: opacity;
   transition: opacity 0.75s ease 1.5s;
 }
@@ -167,7 +168,7 @@ html {
   background-color: #b5a997;
   border-radius: 5px;
   transform: translate(8px, 8px) rotate(0.5deg);
-  animation: modalpop 2s cubic-bezier(0.5, 0, 0.1, 1) 0.2s both;
+  animation: modalpopdark 2s cubic-bezier(0.5, 0, 0.1, 1) 0.2s both;
 }
 #modal .cnt .bg-light {
   background-color: #fff6e3;
@@ -179,6 +180,10 @@ html {
   max-width: 600px;
   will-change: opacity;
   animation: fadein 0.75s ease 1.5s both;
+}
+@keyframes modalpopdark {
+  0% { transform: translate(8px, 8px) rotate(0.5deg) scale(0.001); }
+  100% { transform: translate(8px, 8px) rotate(0.5deg) scale(1); }
 }
 @keyframes modalpop {
   0% { transform: scale(0.001); }
@@ -257,7 +262,7 @@ html {
   position: relative;
   padding: 50px 60px;
   margin: 30px;
-  opacity: 0.0001;
+  opacity: 1;
   will-change: opacity;
   transition: opacity 0.75s ease;
 }
@@ -275,7 +280,7 @@ html {
   background-color: #bab3a5;
   border-radius: 5px;
   transform: translate(10px, 10px) rotate(1deg);
-  animation: modalpop 2s cubic-bezier(0.5, 0, 0.1, 1) both;
+  animation: modalpopdark 2s cubic-bezier(0.5, 0, 0.1, 1) both;
 }
 #info .cnt .bg-light {
   background-color: #f9f2e4;
@@ -383,6 +388,7 @@ nav svg.sound {
 }
 nav svg.sound2 { left: 8px; }
 nav .color-square {
+  display: block;
   position: relative;
   width: 18px;
   height: 18px;
@@ -447,3 +453,6 @@ nav .cnt {
   nav { top: 20px; right: 20px; }
   nav .cnt { font-size: 27px; }
 }
+
+.button:hover { transform: rotate(10deg) translateY(-2px); }
+.button:active, .button-close:active { transform: rotate(10deg) translateY(2px); box-shadow: 1px 1px #716c66; }

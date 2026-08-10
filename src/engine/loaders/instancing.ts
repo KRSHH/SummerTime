@@ -115,63 +115,25 @@ export function createInstancedGeometryPatches(
   const _v1 = new Vector3();
   const _v2 = new Vector3();
 
+  let current = 0;
+  const cluster: number[] = [];
   while (remaining.length > 0) {
-    const current = remaining.splice(0, 1)[0];
-    const cluster = [current];
+    cluster.push(current);
+    remaining.splice(remaining.indexOf(current), 1);
     _v1.fromBufferAttribute(positions, current);
-
-    let next: number | null = null;
-    let best = Infinity;
-    let valid = false;
-    for (const i of remaining) {
-      _v2.fromBufferAttribute(positions, i);
-      const d = _v2.distanceToSquared(_v1);
-      if (d < best) {
-        next = i;
-        best = d;
-      }
-    }
-    if (next !== null) {
-      const dist = Math.sqrt(best);
-      if (dist < maxDistance) valid = true;
-      // consume nearest row so the next patch starts somewhere sensible
-      remaining.splice(remaining.indexOf(next), 1);
-      cluster.push(next);
-    }
-
-    // continue filling the cluster while rows are close enough
-    let grew = true;
-    while (grew && cluster.length < maxPerPatch) {
-      grew = false;
-      let bestIdx = -1;
-      let bestDist = Infinity;
-      for (let i = 0; i < remaining.length; i++) {
-        _v2.fromBufferAttribute(positions, remaining[i]);
-        const d = _v2.distanceToSquared(_v1);
-        if (d < bestDist) {
-          bestDist = d;
-          bestIdx = i;
-        }
-      }
-      if (bestIdx >= 0 && Math.sqrt(bestDist) < maxDistance) {
-        cluster.push(remaining.splice(bestIdx, 1)[0]);
-        grew = true;
-      }
-    }
-    void valid;
-
+    let next: number | null = null; let best = Infinity;
+    for (const i of remaining) { _v2.fromBufferAttribute(positions, i); const d = _v2.distanceToSquared(_v1); if (d < best) { best = d; next = i; } }
+    const valid = next !== null && Math.sqrt(best) < maxDistance;
+    if (next !== null && valid && cluster.length < maxPerPatch) { current = next; continue; }
     const patchGeo = new BufferGeometry();
     for (const name of names) {
-      const src = data.attributes[name];
-      const arr = new Float32Array(src.itemSize * cluster.length);
-      for (let c = 0; c < cluster.length; c++) {
-        const offset = cluster[c] * src.itemSize;
-        const values = src.array as ArrayLike<number>;
-        for (let i = 0; i < src.itemSize; i++) arr[c * src.itemSize + i] = values[offset + i];
-      }
+      const src = data.attributes[name]; const arr = new Float32Array(src.itemSize * cluster.length);
+      for (let c = 0; c < cluster.length; c++) { const offset = cluster[c] * src.itemSize; for (let i = 0; i < src.itemSize; i++) arr[c * src.itemSize + i] = (src.array as ArrayLike<number>)[offset + i]; }
       patchGeo.setAttribute(name, new BufferAttribute(arr, src.itemSize));
     }
     patches.push(createInstancedGeometry(base, patchGeo));
+    cluster.length = 0;
+    if (remaining.length) current = remaining[0];
   }
   return patches;
 }

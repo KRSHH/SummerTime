@@ -2,7 +2,7 @@
 // reflection with oblique clipping plane), used by the sea.
 
 import {
-  HalfFloatType,
+  UnsignedByteType,
   LinearFilter,
   LinearMipmapLinearFilter,
   Matrix4,
@@ -61,7 +61,7 @@ export class Reflector extends Mesh {
       magFilter: LinearFilter,
       generateMipmaps: true,
       samples: options.samples ?? 0,
-      type: HalfFloatType,
+      type: UnsignedByteType,
       encoding: sRGBEncoding,
     });
 
@@ -141,6 +141,8 @@ export class Reflector extends Mesh {
     this.visible = false;
     this._onBeforeReflectorRender?.(this);
     const currentTarget = renderer.getRenderTarget();
+    const currentViewport = new Vector4();
+    renderer.getViewport(currentViewport);
     const xrEnabled = renderer.xr.enabled;
     const shadowAutoUpdate = renderer.shadowMap.autoUpdate;
     renderer.xr.enabled = false;

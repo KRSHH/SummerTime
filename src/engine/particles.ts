@@ -119,7 +119,8 @@ function createParticlesMaterial(
         uniform vec3 uColor;
         varying float vAlpha;
         void main() {
-          gl_FragColor = vec4(uColor, 1.0);
+          gl_FragColor.rgb = uColor;
+          gl_FragColor.a = smoothstep(0.5, 0.45, length(gl_PointCoord.xy - 0.5));
         }
       `,
   });
@@ -139,7 +140,7 @@ export class ParticlesGPU extends InstancedMesh {
   isParticlesGPU = true;
   private _computation!: GPUComputationRenderer;
   private _positionsVar!: Variable;
-  private _afterCompute: (() => void) | null = null;
+  afterCompute: ((renderer?: any, scene?: any, camera?: any) => void) | null = null;
 
   constructor(geometry: InstancedBufferGeometry, material: Material, count: number) {
     super(geometry, material, count);
@@ -162,13 +163,13 @@ export class ParticlesGPU extends InstancedMesh {
       };
       this._computation.init();
     }
-    if (options.afterCompute) this._afterCompute = options.afterCompute;
+    if (options.afterCompute) this.afterCompute = options.afterCompute;
     if (options.autoCompute !== false) {
       this.onBeforeRender = this.compute.bind(this);
     }
   }
 
-  compute() {
+  compute(renderer?: any, scene?: any, camera?: any) {
     for (const variable of (this._computation as any).variables) {
       const uModel = variable.material.uniforms.uModelMatrix;
       const uView = variable.material.uniforms.uViewMatrix;
@@ -182,7 +183,7 @@ export class ParticlesGPU extends InstancedMesh {
     if (material.uniforms.tPositions && this._positionsVar) {
       material.uniforms.tPositions.value = this._computation.getCurrentRenderTarget(this._positionsVar).texture;
     }
-    this._afterCompute?.();
+    this.afterCompute?.(renderer, scene, camera);
   }
 }
 

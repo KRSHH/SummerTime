@@ -39,7 +39,8 @@ export class Secret {
 abstract class AnimatedCharacter extends SceneModule {
   declare mesh: Mesh;
   private _secret: Secret | null = null;
-  private _animRange = 10;
+  protected _animRange = 10;
+  protected _secretDistance = 3;
 
   protected async initCharacter(
     meshFile: string,
@@ -91,7 +92,7 @@ abstract class AnimatedCharacter extends SceneModule {
         this._secret = new Secret({
           mesh: this.mesh,
           player: this.scene.characters.mesh._localObject,
-          distance: this._animRange * 0.3,
+          distance: this._secretDistance,
           text: secretText,
         });
       }
@@ -128,6 +129,7 @@ export class UFO extends SceneModule {
 }
 
 export class Alien extends AnimatedCharacter {
+  protected _animRange = 30;
   protected init() {
     return super.initCharacter(
       'alien.bin',
@@ -143,6 +145,7 @@ export class Alien extends AnimatedCharacter {
 }
 
 export class Cats extends AnimatedCharacter {
+  protected _secretDistance = 2;
   protected init() {
     return super.initCharacter(
       'cats.bin',
@@ -167,7 +170,7 @@ export class Sloth extends AnimatedCharacter {
       [-8.38, 1.47, 46.16],
       [-30.8, -42.5, -25.7],
       0.8,
-      'It must be exhausting being this slow.',
+      'A sloth? That permanent smile it has is so creepy. What is it doing there?',
     );
   }
 }

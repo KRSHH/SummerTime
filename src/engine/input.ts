@@ -212,6 +212,7 @@ export function initTouches({
     }
   };
 
+  el.addEventListener('wheel', (e) => events.emit('wheel', e));
   el.addEventListener('pointerdown', onPointerDown);
   el.addEventListener('pointermove', onPointerMove);
   el.addEventListener('pointerup', onPointerEnd);

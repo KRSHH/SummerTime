@@ -165,7 +165,7 @@ export class FollowSunLight extends DirectionalLight {
         (obj as any).material = (obj as any).__prevMaterial;
         delete (obj as any).__prevMaterial;
       }
-      if ((obj.layers as any).test(cameraLayer)) obj.layers.disable(cameraLayer);
+      if (((obj.layers as any).mask & (1 << cameraLayer)) !== 0) obj.layers.disable(cameraLayer);
       const material = (obj as any).material as any;
       if (!material?.isMaterial) return;
       const uniforms = material.uniforms;
@@ -173,7 +173,7 @@ export class FollowSunLight extends DirectionalLight {
       if (uniforms.csmMap) {
         if ((obj.parent as any)?.isLOD) {
           const levelIndex = (obj.parent as any).levels.findIndex((l: any) => l.object === obj);
-          uniforms.csmMap.value = this.csmMaps[Math.min(Math.max(levelIndex, 0), this.csmMaps.length - 1)].texture;
+          uniforms.csmMap.value = this.csmMaps[levelIndex >= 0 && levelIndex < this.csmMaps.length ? levelIndex : 0].texture;
         } else {
           uniforms.csmMap.value = this.csmMaps[0].texture;
         }

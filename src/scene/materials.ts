@@ -19,8 +19,10 @@ import {
   Vector2,
   Vector3,
   Vector4,
+  DoubleSide,
+  FrontSide,
 } from 'three';
-import { globalUBO } from '../engine/globals';
+import { engine, globalUBO } from '../engine/globals';
 import { textureLoader } from '../engine/loaders/textures';
 
 // ---- GLSL chunks (verbatim from the decompiled bundle) ----
@@ -144,7 +146,7 @@ export function phongMaterial(options: PhongMaterialOptions = {}): ShaderMateria
   defines.USE_RAMP = 1;
   material.uniforms.tCloudsTop.value = textureLoader.load('clouds_top.ktx2', 'repeat');
   // progressive: swap in the high-quality clouds texture after the initial load
-  textureLoader.loadProgressive('clouds_top-highq.ktx2', material.uniforms.tCloudsTop);
+  engine.initialSceneLoaded.then(() => textureLoader.loadProgressive('clouds_top-highq.ktx2', material.uniforms.tCloudsTop));
 
   if (options.isCharacters) {
     defines.IS_CHARACTER = 1;
@@ -159,7 +161,7 @@ export function phongMaterial(options: PhongMaterialOptions = {}): ShaderMateria
     material.uniforms.tTerrDetails = { value: textureLoader.load('terrain-details-highq.png', 'repeat') };
     material.uniforms.grassColor1 = { value: new Color('#558f6e') };
     material.uniforms.grassColor2 = { value: new Color('#9bc2a4') };
-    textureLoader.loadProgressive('masks.png', material.uniforms.tMasks);
+    engine.initialSceneLoaded.then(() => textureLoader.loadProgressive('masks.png', material.uniforms.tMasks));
   }
   if (options.isTree || options.isBush) {
     defines.SHAKE = 1;
@@ -171,21 +173,21 @@ export function phongMaterial(options: PhongMaterialOptions = {}): ShaderMateria
   if (options.isWires) {
     defines.SHAKE = 1;
     defines.LIGHTWIRES = 1;
-    material.side = 1; // DoubleSide
+    material.side = DoubleSide
   }
   if (options.isRock) {
     material.shadowSide = 0;
   }
   if (options.isPalmTree) {
     material.shadowSide = 0;
-    material.side = 1;
+    material.side = DoubleSide
     defines.SHAKE = 1;
   }
   if (options.isHouse2 || options.isCastles) {
     material.shadowSide = 0;
   }
   if (options.isGrass) {
-    material.side = 0;
+    material.side = FrontSide
     material.transparent = true;
     material.uniforms.map.value = textureLoader.load('grass-patches-highq.ktx2', 'colordata');
     material.uniforms.charPos = { value: new Vector3() };
@@ -198,7 +200,7 @@ export function phongMaterial(options: PhongMaterialOptions = {}): ShaderMateria
     (material as any).map = material.uniforms.map.value;
   }
   if (options.isUFO) {
-    material.side = 0;
+    material.side = FrontSide;
   }
   if (options.isAlien || options.isCats || options.isSloth) {
     material.shadowSide = 0;

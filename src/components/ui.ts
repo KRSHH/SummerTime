@@ -33,12 +33,13 @@ export class UiController {
   private readonly infoModal: HTMLDivElement;
   private readonly infoPanel: HTMLElement;
   private readonly secretPanel: HTMLElement;
-  private readonly colorSquare: HTMLSpanElement;
+  private readonly colorSquare: HTMLDivElement;
   private readonly soundButton: HTMLButtonElement;
   private readonly count: HTMLDivElement;
   private easterEggs = 0;
   private totalEasterEggs = 0;
   private overlayOpen = false;
+  private secretTimer = 0;
 
   constructor(root: HTMLElement) {
     this.webglContainer = document.createElement('div');
@@ -51,12 +52,12 @@ export class UiController {
     root.append(this.loader);
 
     this.nav = document.createElement('nav');
-    this.nav.innerHTML = '<button class="button" type="button" aria-label="toggle sound"></button><button class="button" type="button" aria-label="randomize character color"><span class="color-square"></span></button><button class="button" type="button" aria-label="about">' + infoIcon + '</button><div class="cnt">0/0</div>';
+    this.nav.innerHTML = '<button class="button" type="button" aria-label="toggle sound"></button><button class="button" type="button" aria-label="randomize character color"><div class="color-square"></div></button><button class="button" type="button" aria-label="about">' + infoIcon + '</button><div class="cnt">0/0</div>';
     root.append(this.nav);
     this.soundButton = this.nav.querySelectorAll('button')[0];
     const colorButton = this.nav.querySelectorAll('button')[1];
     const infoButton = this.nav.querySelectorAll('button')[2];
-    this.colorSquare = colorButton.querySelector('.color-square') as HTMLSpanElement;
+    this.colorSquare = colorButton.querySelector('.color-square') as HTMLDivElement;
     this.count = this.nav.querySelector('.cnt') as HTMLDivElement;
     this.soundButton.innerHTML = speakerIcon;
     this.soundButton.addEventListener('click', () => events.emit('webgl_audio_mute_toggle'));
@@ -93,11 +94,13 @@ export class UiController {
   }
 
   showSecret(message: string) {
+    if (this.overlayOpen) this.closeOverlay();
     this.secretPanel.textContent = message;
     this.secretModal.classList.add('visible');
-    this.easterEggs = Math.min(this.totalEasterEggs, this.easterEggs + 1);
-    this.count.textContent = `${this.easterEggs}/${this.totalEasterEggs}`;
-    window.setTimeout(() => this.closeSecret(), 10_000);
+    this.count.textContent = this.easterEggs + '/' + this.totalEasterEggs;
+    window.clearTimeout(this.secretTimer);
+    this.secretTimer = window.setTimeout(() => this.closeSecret(), 10000);
+    window.setTimeout(() => { this.easterEggs = Math.min(this.totalEasterEggs, this.easterEggs + 1); this.count.textContent = this.easterEggs + '/' + this.totalEasterEggs; }, 750);
   }
 
   incrementEasterEggs() {
@@ -106,7 +109,7 @@ export class UiController {
   }
 
   setMuted(muted: boolean) {
-    this.soundButton.innerHTML = muted ? mutedIcon : speakerIcon;
+    this.soundButton.innerHTML = muted ? speakerIcon : mutedIcon;
   }
 
   setCharacterColor(color: string) {
@@ -117,7 +120,9 @@ export class UiController {
     if (!this.overlayOpen) return;
     this.overlayOpen = false;
     this.infoModal.classList.remove('visible');
+    this.nav.classList.add('visible');
     events.emit('webgl_overlay_animation', 0);
+    events.emit('webgl_overlay_volume', 1);
     events.emit('webgl_character_controls_enable', true);
   }
 
@@ -127,10 +132,13 @@ export class UiController {
       return;
     }
     this.overlayOpen = true;
+    this.secretModal.classList.remove('visible');
+    this.nav.classList.remove('visible');
     const content = infoContent[name];
     this.infoPanel.innerHTML = `<h1>${content.title}</h1>${content.paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join('')}`;
     this.infoModal.classList.add('visible');
     events.emit('webgl_overlay_animation', 1);
+    events.emit('webgl_overlay_volume', 0.4);
     events.emit('webgl_character_controls_enable', false);
   }
 

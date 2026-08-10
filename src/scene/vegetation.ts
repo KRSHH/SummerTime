@@ -12,8 +12,8 @@ const LEVELS_TREES = [
 ];
 const LEVELS_BUSHES = [
   { mesh: 'bush.bin', distance: 0, hysteresis: 0 },
-  { mesh: 'bush-lod2.bin', distance: 25, hysteresis: 0 },
-  { mesh: 'bush-lod3.bin', distance: 45, hysteresis: 0 },
+  { mesh: 'bush-lod2.bin', distance: 30, hysteresis: 0 },
+  { mesh: 'bush-lod3.bin', distance: 50, hysteresis: 0 },
 ];
 const LEVELS_PALMS = [
   { mesh: 'palmtree.bin', distance: 0, hysteresis: 0 },
@@ -78,7 +78,7 @@ export class Rocks1 extends SceneModule {
         geometryLoader.instancedPatches(l.mesh, 'rock1-instances.bin', { maxPerPatch: 40, maxDistance: 50 }),
       ),
     );
-    this.meshes = makeGeometryLOD(patches as any, LEVELS_ROCKS1, () => phongMaterial({ isRock: true }), 'rocks1');
+    this.meshes = makeGeometryLOD(patches as any, LEVELS_ROCKS1, () => phongMaterial({ isRock: true }), 'rocks1', 70);
     this.meshes.forEach((lod) => this.scene.add(lod));
     this.ready.resolve();
   }
@@ -108,11 +108,11 @@ export class Grass extends SceneModule {
     this.meshes = makeGeometryLOD(
       [patches as any],
       [{ mesh: 'grass.bin', distance: 0, hysteresis: 0 }],
-      () => phongMaterial({ isGrass: true }),
+      () => { const m = phongMaterial({ isGrass: true }); return m; },
       'grass',
       55,
     );
-    this.meshes.forEach((lod) => this.scene.add(lod));
+    this.meshes.forEach((lod) => { lod.traverse((obj) => { if ((obj as any).isInstancedMesh) (obj as any).castShadow = false; }); this.scene.add(lod); });
 
     // grass reacts to the player character
     const charPos = { value: new (await import('three')).Vector3() };

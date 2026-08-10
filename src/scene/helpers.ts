@@ -57,7 +57,7 @@ export function makeInstanced(
   mesh.updateMatrixWorld(true);
   mesh.matrixWorldAutoUpdate = false;
   mesh.receiveShadow = true;
-  mesh.castShadow = true;
+  mesh.castShadow = geometry._castShadow ?? true;
   return mesh;
 }
 
@@ -86,23 +86,18 @@ export class LODExtended extends LOD {
     _v2.setFromMatrixPosition(this.matrixWorld).add(geometry.boundingSphere!.center);
     const distance = (_v1.distanceTo(_v2) - geometry.boundingSphere!.radius * scale) / cam.zoom;
     this.levels[0].object.visible = true;
-    let level = -1;
-    for (let i = 0; i < this.levels.length; i++) {
-      if (distance <= this.levels[i].distance) {
-        level = i;
-        break;
-      }
+    let level = 1;
+    for (; level < this.levels.length; level++) {
+      const threshold = this.levels[level].distance - (this.levels[level].object.visible ? this.levels[level].distance * this.levels[level].hysteresis : 0);
+      if (distance >= threshold) {
+        this.levels[level - 1].object.visible = false;
+        this.levels[level].object.visible = true;
+      } else break;
     }
-    if (level !== -1) {
-      const active = this.levels[level];
-      this.levels.forEach((l, i) => {
-        if (i !== level && l.object.visible) l.object.visible = false;
-      });
-      active.object.visible = true;
-      if (this._hideDistance !== Infinity && distance > this._hideDistance) {
-        active.object.visible = false;
-      }
-    }
+    (this as any)._currentLevel = level - 1;
+    if ((this as any)._currentLevel === this.levels.length - 1 && distance > this._hideDistance) level = 0;
+    for (let i = 0; i < this.levels.length; i++) this.levels[i].object.visible = i === level - 1;
+    if (level === 0) for (const l of this.levels) l.object.visible = false;
   }
 }
 

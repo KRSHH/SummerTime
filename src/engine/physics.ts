@@ -250,7 +250,7 @@ export class CollisionPhysics {
 
     if (this._checkFalling && this._geometry) {
       if (local.position.y + this._fallLimitDistance < this._geometry.boundingBox!.min.y) {
-        local.position.copy(local.initialPosition);
+        (this._characters as any).snap(local.initialPosition.toArray());
       }
     }
   }

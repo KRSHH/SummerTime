@@ -2,7 +2,7 @@
 // format with all the scene entry points (plain, instanced, patched,
 // vertex-animated, skinned, curves). Port of the original `geometryLoader`.
 
-import { BufferGeometry } from 'three';
+import { BufferGeometry, BoxGeometry } from 'three';
 import { parseBin, decodeGeometry, TYPED_ARRAYS, type TypedArrayName } from './bin';
 import {
   createCurves,
@@ -31,10 +31,10 @@ function initLoad<T>(key: string, load: () => Promise<T>): Promise<T> {
 }
 
 /** Empty geometry returned when a model fails to load (original behavior). */
-const fallbackGeometry = new BufferGeometry();
+const createFallbackGeometry = () => { const g = new BoxGeometry(1, 1, 1); (g as any)._fallback = true; return g; };
 
 async function loadBin(url: string): Promise<GeometryWithData> {
-  const response = await fetch(`/assets/geometries/${url}`);
+  const response = await fetch(new URL('assets/geometries/' + url, window.location.href));
   if (!response.ok) throw new Error(`${url} could not be loaded (${response.status})`);
   const buffer = await response.arrayBuffer();
   const { header, payload } = parseBin(buffer);
@@ -60,7 +60,7 @@ export const geometryLoader = {
         return geometry;
       } catch (err) {
         console.warn('Geometry load failed:', url, err);
-        return fallbackGeometry;
+        return createFallbackGeometry();
       }
     });
   },

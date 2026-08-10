@@ -58,7 +58,7 @@ const adaptiveDPR = {
   minThresholdFPS: 30,
   maxThresholdFPS: 60,
   dprStep: 0.1,
-  dprMinLimit: 0.6,
+  dprMinLimit: 0.7,
   pingPongLimit: 4,
   lastUpdateTime: 2,
   averages: [] as number[],
@@ -159,9 +159,10 @@ class Engine {
     this.setupRenderer(webglContainer);
     this.setupComposer();
     this.applyDPR();
-    initTouches({ element: webglContainer, fingers, contextMenu });
+    (this as any).touchController = initTouches({ element: webglContainer, fingers, contextMenu });
     initKeys();
     initTextureLoader(this.renderer);
+    events.on('resize', this.resize); 
     if (useAdaptive) {
       this.initialSceneLoaded.then(() => adaptiveDPR.start());
     }
@@ -181,6 +182,8 @@ class Engine {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = PCFSoftShadowMap;
     this.renderer.info.autoReset = false;
+    (this.renderer.capabilities as any).floatRenderTarget = !!this.renderer.extensions.has('EXT_color_buffer_float');
+    (this.renderer.capabilities as any).floatLinearFiltering = !!this.renderer.extensions.has('OES_texture_float_linear');
 
     const el = this.renderer.domElement;
     el.style.display = 'block';
@@ -220,6 +223,14 @@ class Engine {
   get mainScene(): ComposerScene {
     return this.renderPass.scene as ComposerScene;
   }
+
+  private resize = (w = client.screen.w, h = client.screen.h) => {
+    if (!this.renderer) return;
+    this.renderer.setSize(w, h, false);
+    this.renderer.domElement.style.width = w + 'px';
+    this.renderer.domElement.style.height = h + 'px';
+    this.composer?.setSize(w, h);
+  };
 
   /** Re-apply the current DPR (canvas + composer + resolution uniform). */
   applyDPR() {

@@ -357,6 +357,7 @@ export class Characters extends CharacterSkinnedMesh {
       +Number(this._localObject.spherical.theta % TWO_PI).toFixed(2),
     ];
     this._dataUpdate.a = this._localObject.userData.a;
+    this._dataUpdate.seed = this._localObject.userData.seed;
     if (this._connection) {
       (this._connection as any)._data = this._dataUpdate;
     }

@@ -141,7 +141,8 @@ export class Circles extends Group {
   update(touchDelta: Vector2, touching: boolean) {
     const move = this.moveCircle.material as ShaderMaterial;
     const jump = this.jumpCircle.material as ShaderMaterial;
-    this._touchActive = lerpFPS(this._touchActive, touching ? 1 : 0, 0.25);
+    this._touchActive = touching ? 1 : lerpFPS(this._touchActive, 0, 0.25);
+    if (!touching && this._touchActive < 0.001) this._touchActive = 0;
     this._touchPosition.lerp(touchDelta, lerpCoefFPS(0.2));
     move.uniforms.uInnerPos.value.copy(this._touchPosition).multiplyScalar(0.35);
     move.uniforms.uInnerPos.value.y *= -1;
@@ -340,7 +341,7 @@ export class Controls {
     this._onTouchEnd();
   }
 
-  enable(interactionNode?: HTMLElement) {
+  enable(interactionNode: HTMLElement = document.body) {
     if (this._enabled) return;
     this._enabled = true;
     this._browserActive = validFocus();
@@ -360,7 +361,7 @@ export class Controls {
     events.on('focus_change', this._onActiveChange);
   }
 
-  disable(interactionNode?: HTMLElement) {
+  disable(interactionNode: HTMLElement = document.body) {
     if (!this._enabled) return;
     this._enabled = false;
     if (interactionNode) {

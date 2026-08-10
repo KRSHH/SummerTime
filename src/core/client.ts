@@ -1,3 +1,5 @@
+import { events } from './events';
+
 // Device / browser / capability detection. Port of the original `client`
 // singleton, rewritten without ua-parser-js (light regexes with the same
 // semantics: device, browser.name, capabilities).
@@ -41,6 +43,7 @@ function parseBrowser(): { name: string; version: number } {
 
 function detectDevice(): Client['device'] {
   const m = /(android|iphone|ipad|ipod|mobile)/i.exec(ua);
+  if (!m && /Macintosh/i.test(ua) && navigator.maxTouchPoints > 1) return 'tablet';
   if (!m) return 'desktop';
   if (m[1].toLowerCase() === 'ipad' || /tablet/i.test(ua)) return 'tablet';
   return 'mobile';
@@ -88,14 +91,19 @@ const setSize = () => {
   client.screen.w = window.innerWidth;
   client.screen.h = window.innerHeight;
   client.screen.dpr = window.devicePixelRatio || 1;
+  events.emit('resize', client.screen.w, client.screen.h);
 };
 window.addEventListener('resize', setSize);
+window.addEventListener('orientationchange', setSize);
 document.addEventListener('visibilitychange', () => {
   client.visible = document.visibilityState === 'visible';
+  events.emit('visibility_change', client.visible);
 });
 window.addEventListener('focus', () => {
   client.focused = true;
+  events.emit('focus_change', true);
 });
 window.addEventListener('blur', () => {
   client.focused = false;
+  events.emit('focus_change', false);
 });

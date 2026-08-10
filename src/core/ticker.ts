@@ -7,7 +7,7 @@ export const ticker = gsap.ticker;
 
 /** Frame-rate ratio (0..1-ish) of the last tick — original `ticker.ratio()`. */
 export function tickerRatio(): number {
-  return ticker.deltaRatio();
+  return Math.min(5, ticker.deltaRatio());
 }
 
 /** Start the global render loop. Callbacks receive (time, deltaTime). */
