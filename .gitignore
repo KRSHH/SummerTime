@@ -91,6 +91,10 @@ out
 .nuxt
 dist
 
+# Rust P2P workspace build output (the wasm pkg is committed for deploys)
+multiplayer/target/
+multiplayer/**/target/
+
 # Gatsby files
 .cache/
 # Comment in the public line in if your project uses Gatsby and not Next.js

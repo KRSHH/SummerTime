@@ -1,0 +1,94 @@
+name: build-wasm
+
+# Rebuilds and publishes the P2P wasm package whenever the Rust multiplayer
+# code (or the build pipeline itself) changes. Vercel then deploys the
+# committed package without needing any Rust toolchain.
+#
+# Trigger: every push to main touching the Rust part — not per commit
+# (path-filtered) and no releases/tags. `workflow_dispatch` allows a manual
+# rebuild at any time.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'multiplayer/**'
+      - '.github/workflows/build-wasm.yml'
+      - 'scripts/build-wasm.sh'
+      - 'package.json'
+  workflow_dispatch:
+
+concurrency:
+  # One wasm build at a time; a newer push cancels the older one — the
+  # newest run rebuilds from the newest HEAD and publishes the result.
+  group: build-wasm
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build and publish wasm package
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pin the exact toolchain used locally (1.96.0) so CI and local builds
+      # are byte-comparable; bump deliberately when the local toolchain moves.
+      - name: Install Rust toolchain (wasm32 target)
+        uses: dtolnay/rust-toolchain@1.96.0
+        with:
+          targets: wasm32-unknown-unknown
+
+      # The big one: caches ~/.cargo registry + multiplayer/target, so
+      # rebuilds only recompile the changed crate instead of all of iroh.
+      # The key covers the Cargo.lock hash and toolchain, so it stays warm
+      # across pushes and invalidates exactly when the inputs change.
+      - name: Cache cargo registry and build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: multiplayer
+
+      - name: Install wasm-pack (pinned prebuilt binary)
+        uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          wasm-pack-version: '0.15.0'
+
+      # ring compiles C for wasm32 with clang, cc-rs archives objects with
+      # llvm-ar/llvm-ranlib, and rustc links the final wasm with wasm-ld.
+      # The runner image only guarantees clang, so install the full LLVM
+      # toolchain and guarantee the unversioned tool names (distro packaging
+      # version-suffixes them, e.g. wasm-ld-18).
+      - name: Ensure C toolchain for wasm (clang, llvm-ar, wasm-ld)
+        run: |
+          if ! command -v clang >/dev/null 2>&1 || ! command -v llvm-ar >/dev/null 2>&1 || ! command -v wasm-ld >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y clang llvm-18 lld-18
+          fi
+          for tool in llvm-ar llvm-ranlib wasm-ld; do
+            if ! command -v "$tool" >/dev/null 2>&1; then
+              sudo ln -sf "/usr/lib/llvm-18/bin/$tool" "/usr/bin/$tool"
+            fi
+          done
+          clang --version | head -1
+          llvm-ar --version | head -1
+          wasm-ld --version | head -1
+
+      - name: Build the wasm package
+        run: bash scripts/build-wasm.sh
+
+      # Publish: commit the refreshed pkg back to main (pushes made with
+      # GITHUB_TOKEN do not re-trigger this workflow, so no loops).
+      - name: Publish the refreshed package
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add multiplayer/browser-wasm/pkg
+          if git diff --cached --quiet; then
+            echo "wasm package unchanged, nothing to commit"
+          else
+            git commit -m "build(wasm): refresh p2p wasm package"
+            git push
+          fi

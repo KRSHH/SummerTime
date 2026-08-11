@@ -43,7 +43,7 @@ modular code with no Svelte and no bundled vendors:
 | Animation | GSAP 3.11.3 + CSSPlugin + CustomEase | npm `gsap@3.11.3` |
 | Shaders | Embedded template strings in the bundle | **Verbatim `.glsl` files** (`src/scene/glsl/`, imported with `?raw`) |
 | Formats | KTX2/Basis, Draco, custom `.bin` geometry (JSON header + interleaved binary) | Same, ported loaders |
-| Networking | WebSocket multiplayer ("microrealm", room prefix `summer`) | Clean port (`src/engine/multiplayer/microrealm.ts`) |
+| Networking | WebSocket multiplayer ("microrealm", room prefix `summer`, private relay server) | **P2P multiplayer over iroh-gossip** compiled to WebAssembly (`src/engine/multiplayer/iroh.ts` + Rust workspace in `multiplayer/`) |
 | Audio | WebAudio, 5 looping tracks (forest / beach / footsteps / song / click1) | Same |
 | Build | One Svelte chunk | Vite + bun, code-split worker chunk |
 
@@ -72,6 +72,46 @@ names, the original `.svelte` template sources (only compiled Svelte 3 output
 exists), and the private multiplayer server implementation (the client protocol
 was fully decoded instead). Everything else, scene, shaders, physics, audio,
 UI, flow, is reproduced here.
+
+## Multiplayer: pure P2P, one hardcoded room
+
+Remote characters are now served by **iroh** (https://iroh.computer), a P2P
+networking library compiled to WebAssembly, instead of the original's private
+WebSocket relay (which is gone and rejects all clients). There is **no
+application server, no rooms, and no join codes**: every client joins the same
+hardcoded room.
+
+How it works:
+
+1. **The room** is a fixed 32-byte seed (`multiplayer/shared/src/lib.rs`,
+   `ROOM_SEED`). It doubles as the gossip `TopicId` (the broadcast scope) and
+   as the secret key of the room's rendezvous address on the public pkarr
+   relay (`dns.iroh.link`).
+2. **Rendezvous (zero signaling):** every client publishes its endpoint
+   address (id + home relay) signed with the room key, and resolves the room
+   key every 3 s. Whoever is in the room is found this way, no server needed
+   to exchange "join codes".
+3. **Gossip:** discovered peers are fed to the iroh-gossip swarm, which then
+   maintains membership and broadcast trees on its own (HyParView/PlumTree).
+   Every frame the local character publishes its `{p, r, a, seed}` state (26
+   bytes), signed (ed25519) and sequenced, so only authenticated, fresh state
+   is applied to remote characters.
+4. **Transport:** browsers can't hole-punch (no UDP), so packets flow through
+   n0's free public relays over WebSocket, end-to-end encrypted, and purely
+   peer-to-peer in every other sense. If the page goes idle/hidden the client
+   slows to a 1 Hz presence beacon instead of dropping out.
+
+The Rust workspace lives in `multiplayer/` (`shared` = room logic,
+`browser-wasm` = wasm-bindgen wrapper, `cli` = native tester). The compiled
+wasm package is committed at `multiplayer/browser-wasm/pkg/` so Vercel deploys
+never need a Rust toolchain. **Rebuilding is handled by CI** (`.github/workflows/build-wasm.yml`): it runs on every push that touches `multiplayer/**`
+(or the build pipeline) with full caching, and commits the refreshed pkg back
+to `main` — no releases or tags involved. Locally, `bun run build:wasm`
+(requires [Rust](https://rustup.rs), [wasm-pack](https://rustwasm.github.io/wasm-pack/)
+and clang/LLVM for the wasm target; both the script and the workflow share
+`scripts/build-wasm.sh`). You can test the room from a terminal with
+`cargo run -p summer-cli --release` inside `multiplayer/` — two instances
+will discover each other exactly like two browser tabs.
 
 ## Architecture
 
@@ -126,6 +166,11 @@ src/
 │                    # sky, sea, terrain, birds, vegetation, structures, setpieces,
 │                    # characters + glsl/ (verbatim shader files)
 └── components/      # ui.ts, plain-DOM UI (loader, nav, easter counter, modals)
+
+multiplayer/         # Rust workspace: iroh P2P room (see section above)
+├── shared/          # SummerNode: endpoint + gossip + pkarr room beacon
+├── browser-wasm/    # wasm-bindgen wrapper → pkg/ (committed, consumed as `summer-iroh`)
+└── cli/             # native tester that joins the same room from a terminal
 ```
 
 ## Credits & disclaimer

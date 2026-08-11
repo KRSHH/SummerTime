@@ -1,0 +1,15 @@
+# Build configuration for the SummerTime P2P workspace.
+#
+# The wasm32-unknown-unknown target has no OS entropy source, so getrandom
+# must be pointed at the browser's crypto API (wasm_js backend).
+[target.wasm32-unknown-unknown]
+rustflags = ["--cfg", "getrandom_backend=\"wasm_js\""]
+
+[profile.release]
+# Small and fast wasm binary. The release profile is shared with the native
+# CLI tester, where these settings are harmless.
+codegen-units = 1
+strip = "symbols"
+lto = true
+opt-level = "z"
+panic = "abort"

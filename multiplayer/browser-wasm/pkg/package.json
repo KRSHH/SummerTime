@@ -1,0 +1,17 @@
+{
+  "name": "summer-browser",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "summer_browser_bg.wasm",
+    "summer_browser.js",
+    "summer_browser_bg.js",
+    "summer_browser.d.ts"
+  ],
+  "main": "summer_browser.js",
+  "types": "summer_browser.d.ts",
+  "sideEffects": [
+    "./summer_browser.js",
+    "./snippets/*"
+  ]
+}

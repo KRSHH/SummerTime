@@ -207,10 +207,10 @@ export class Controls {
     this.circles = new Circles();
   }
 
-  private _onActiveChange() {
+  private _onActiveChange = () => {
     this._browserActive = validFocus();
     if (!this._browserActive) this._endInteraction();
-  }
+  };
 
   private _onKey = (e: KeyboardEvent) => {
     const down = e.type === 'keydown';

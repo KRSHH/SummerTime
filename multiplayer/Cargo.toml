@@ -1,0 +1,16 @@
+[workspace]
+resolver = "2"
+members = ["shared", "browser-wasm", "cli"]
+default-members = ["cli"]
+
+[workspace.dependencies]
+# iroh is compiled with default-features disabled so the WebAssembly build
+# works; tls-ring is the crypto backend that builds for wasm32-unknown-unknown.
+iroh = { version = "1", default-features = false, features = ["tls-ring"] }
+iroh-gossip = { version = "0.101", default-features = false, features = ["net"] }
+n0-future = "0.3"
+postcard = "1.1"
+serde = { version = "1", features = ["derive"] }
+anyhow = "1"
+tokio = { version = "1", default-features = false, features = ["sync"] }
+tracing = "0.1"

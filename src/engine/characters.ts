@@ -31,7 +31,7 @@ import type { FollowCamera } from './camera';
 import { Controls } from './controls';
 import { CollisionPhysics } from './physics';
 import { quaternionFromSpherical } from './quaternion';
-import { RealmConnection, type RealmClientData } from './multiplayer/microrealm';
+import { P2PConnection, type P2PClientData } from './multiplayer/iroh';
 
 const MAX_CHARS = 128;
 const SECURE_EPS = 1e-4;
@@ -108,9 +108,6 @@ export interface CharacterOptions {
   relativeCameraPosition?: Vector3;
   lookatMeshOffset?: Vector3;
   skinShadows?: boolean;
-  servers?: string[];
-  roomPrefix?: string;
-  inactiveDisconnect?: boolean;
   initialData?: Record<string, unknown>;
   positionCharLerp?: number;
   rotationCharLerp?: number;
@@ -246,7 +243,7 @@ export class Characters extends CharacterSkinnedMesh {
   _camera!: FollowCamera;
 
   private _charactersObjects = new Map<string, CharacterLocal>();
-  private _connection!: RealmConnection;
+  private _connection!: P2PConnection;
   private _positionCharLerp: number;
   private _rotationCharLerp: number;
   private _animationCharLerp: number;
@@ -255,7 +252,7 @@ export class Characters extends CharacterSkinnedMesh {
   private _customAttribUpdate: CharacterOptions['customAttribUpdate'];
   private _inactiveTime: number;
   private _inactiveMilliseconds = 0;
-  private _dataUpdate = { p: [0, 0, 0], r: [0, 0], a: 0 } as RealmClientData;
+  private _dataUpdate = { p: [0, 0, 0], r: [0, 0], a: 0 } as P2PClientData;
 
   private _v0 = new Vector3();
   private _v1 = new Vector3();
@@ -313,11 +310,10 @@ export class Characters extends CharacterSkinnedMesh {
           relativeCameraPosition: options.relativeCameraPosition,
           lookatMeshOffset: options.lookatMeshOffset,
         });
-        this._connection = new RealmConnection({
-          servers: options.servers ?? ['wss://summer-afternoon-nipcjeapgq-uc.a.run.app'],
-          roomPrefix: options.roomPrefix ?? 'summer',
+        // Join the single shared P2P room (iroh-gossip over WebAssembly,
+        // hardcoded room, no server) and mirror remote characters.
+        this._connection = new P2PConnection({
           data: this._dataUpdate,
-          dataTypesOverwrite: { p: 'float', r: 'float', a: 'uint32' },
           onConnect: () => this.connected.resolve(),
           addClient: (id, data) => this._addCharacter(id, data),
           removeClient: (id) => this._removeCharacter(id),
@@ -426,7 +422,7 @@ export class Characters extends CharacterSkinnedMesh {
     });
   }
 
-  private _addCharacter(id: string, data: RealmClientData) {
+  private _addCharacter(id: string, data: P2PClientData) {
     const remote = new Object3D() as CharacterLocal;
     remote.spherical = new Spherical(1, HALF_PI);
     remote.targetPosition = new Vector3();
