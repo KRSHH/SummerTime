@@ -1,5 +1,4 @@
-// The environment: composes every scene module, the sun (with cascaded
-// shadow maps), the audio controller and the intro camera animation.
+// The environment: composes every scene module, the sun (CSM), audio, intro.
 
 import { HemisphereLight, Spherical } from 'three';
 import { gsap } from 'gsap';

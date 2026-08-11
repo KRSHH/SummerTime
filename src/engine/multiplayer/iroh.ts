@@ -1,28 +1,16 @@
-// P2P multiplayer transport for SummerTime, built on iroh-gossip compiled
-// to WebAssembly. Replaces the old MicroRealm WebSocket relay (and its
-// private server) with direct peer-to-peer messaging.
+// P2P multiplayer over iroh-gossip (wasm), replacing the old WebSocket relay.
+// One hardcoded room (fixed 32-byte seed = gossip topic + pkarr rendezvous
+// key on dns.iroh.link); peers discover each other via periodic pkarr
+// resolve. Browsers can't hole-punch, so traffic is relayed through n0's
+// public relays — still e2e encrypted, no app server. Frames are signed
+// (ed25519) + sequenced in Rust.
 //
-// Everyone joins one hardcoded room — no rooms, no join codes, no backend:
-//  - A fixed 32-byte seed doubles as the gossip TopicId and as the room's
-//    rendezvous key on the public pkarr relay (dns.iroh.link). Every client
-//    publishes its endpoint address under that key and resolves it
-//    periodically, so peers discover each other and the gossip swarm
-//    self-connects.
-//  - Traffic flows peer-to-peer over iroh. Browsers cannot hole-punch (no
-//    UDP), so packets are relayed through n0's free public relays — still
-//    end-to-end encrypted, and no application server is involved.
-//  - State frames are signed (ed25519) and sequenced in Rust, so only
-//    authenticated messages are surfaced here.
-//
-// The wasm side exposes: SummerNode.spawn() → node.join_room() →
-// { sender, receiver } where sender.broadcast(bytes) signs + broadcasts and
-// receiver is a ReadableStream of typed events. State encoding (26 bytes):
-//
-//   [0]        u8  version (1)
-//   [1..13]    p   3 × f32 LE
-//   [13..21]   r   2 × f32 LE
-//   [21]       u8  a (animation: 0 idle, 1 run, 2 bored)
-//   [22..26]   seed f32 LE
+// State encoding (26 bytes):
+//   [0]      u8   version (1)
+//   [1..13]  p    3 × f32 LE
+//   [13..21] r    2 × f32 LE
+//   [21]     u8   a (animation: 0 idle, 1 run, 2 bored)
+//   [22..26] seed f32 LE
 
 import { SummerNode, type RoomChannel } from 'summer-iroh';
 

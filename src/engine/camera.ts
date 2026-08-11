@@ -1,8 +1,6 @@
-// Follow camera. Clean merged port of the original `baseCamera` +
-// `orbitCamera` + `followCamera` mixin chain (the experience only ever uses
-// the follow variant): spherical orbit around a followed mesh with lerped
-// position/target/rotation, touch parallax displacement, noise-based shake,
-// collision-based zoom-in and optional fly mode.
+// Follow camera (merged port of `baseCamera`/`orbitCamera`/`followCamera`):
+// spherical orbit around a followed mesh, lerped pos/target/rot, parallax,
+// shake, collision zoom.
 
 import {
   Matrix4,

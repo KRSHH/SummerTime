@@ -1,8 +1,6 @@
-// Geometry post-processing used across the scene: instancing, per-patch
-// instancing (for frustum culling + LOD), vertex-texture animation, curve
-// paths, skinned meshes and animation clips. Ports of the original
-// `createInstancedGeometry*` / `createVertexAnimation` / `createCurves` /
-// `createSkin*` helpers.
+// Geometry post-processing for the scene (port of `createInstancedGeometry*`,
+// `createVertexAnimation`, `createCurves`, `createSkin*`): instancing,
+// per-patch instancing, vertex-texture animation, curves, skin + clips.
 
 import {
   AnimationClip,
@@ -35,11 +33,8 @@ const INSTANCE_ATTRIBUTES = ['position', 'quaternion', 'scale'];
 const _obj = { scale: new Vector3(), quaternion: new Quaternion(), position: new Vector3() };
 
 /**
- * Merge a base mesh with an instancing data geometry (one row per instance).
- * Instance `position/quaternion/scale` rows become a baked matrix array
- * (`_matrixArray`) attached to the returned geometry; any other data
- * attribute becomes an InstancedBufferAttribute.
- */
+/** Merge a base mesh with per-instance data; pos/rot/scale rows → `_matrixArray`,
+ *  other attributes → InstancedBufferAttribute. */
 export function createInstancedGeometry(
   base: BufferGeometry,
   data: BufferGeometry,
@@ -97,10 +92,8 @@ export interface PatchOptions {
 }
 
 /**
- * Split instance rows into spatial patches (clusters of ≤ maxPerPatch rows
- * within maxDistance) and return one instanced geometry per patch. Lets the
- * renderer frustum-cull and LOD individual patches.
- */
+/** Split instances into spatial patches (≤ maxPerPatch within maxDistance) for
+ *  per-patch frustum culling + LOD. Returns one geometry per patch. */
 export function createInstancedGeometryPatches(
   base: BufferGeometry,
   data: BufferGeometry,
@@ -139,10 +132,8 @@ export function createInstancedGeometryPatches(
 }
 
 /**
- * Convert a vertex-animation geometry (attributes named `X_1..X_frames`)
- * into a static geometry plus a texture atlas holding every frame, exposed
- * as `__vertexAnimationUniforms` for the animation shader.
- */
+/** Vertex-animation geometry (`X_1..X_frames` attrs) → static geometry + a
+ *  per-frame texture atlas exposed as `__vertexAnimationUniforms`. */
 export function createVertexAnimation(geometry: BufferGeometry): BufferGeometry {
   const userData = geometry.userData as { frames: number; fps: number };
   const names = Object.keys(geometry.attributes);
@@ -191,9 +182,8 @@ export function createVertexAnimation(geometry: BufferGeometry): BufferGeometry 
 }
 
 /**
- * Build curve paths from a data geometry of points (one attribute row per
- * point). `autoClose` closes each loop; density scales the sampled points.
- */
+/** Build curve paths from a point data geometry; `autoClose` closes loops,
+ *  `density` scales samples. */
 export function createCurves(
   geometry: BufferGeometry,
   autoClose = false,
@@ -251,9 +241,7 @@ export function createSkin(
 const ANIMATION_ATTRIBUTES = ['scale', 'quaternion', 'position'];
 
 /**
- * Convert a frame-data geometry (position/quaternion/scale rows, one block
- * per frame) into a three.js AnimationClip for a skinned mesh.
- */
+/** Frame-data geometry (pos/quat/scale per frame) → three.js AnimationClip. */
 export function createSkinAnimation(name: string, data: BufferGeometry): AnimationClip {
   const userData = data.userData as { frames: number; fps: number };
   const frames = userData.frames;

@@ -1,5 +1,4 @@
-// Build a quaternion from a spherical coordinate (used by the character
-// physics to orient the mesh). Port of the original `quaternionFromSpherical`.
+// Quaternion from a spherical coordinate (port of `quaternionFromSpherical`).
 
 import { Matrix4, Spherical, Vector3 } from 'three';
 

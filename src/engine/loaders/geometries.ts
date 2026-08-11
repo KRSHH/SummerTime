@@ -1,6 +1,5 @@
-// Geometry loader facade: promise-cached loading of the site's `.bin`
-// format with all the scene entry points (plain, instanced, patched,
-// vertex-animated, skinned, curves). Port of the original `geometryLoader`.
+// Geometry loader facade (port of `geometryLoader`): promise-cached `.bin`
+// loading with all scene entry points (plain/instanced/patched/skinned/curves).
 
 import { BufferGeometry, BoxGeometry } from 'three';
 import { parseBin, decodeGeometry, TYPED_ARRAYS, type TypedArrayName } from './bin';

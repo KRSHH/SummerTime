@@ -1,7 +1,5 @@
-// Ambient audio controller. Port of the original `audioController`: five
-// preloaded tracks (forest/beach/steps/song/click1) played through a
-// positional AudioListener, crossfaded by the player's position on the map,
-// with visibility muting, overlay-volume ducking and GSAP-synced looping.
+// Ambient audio controller (port of `audioController`): 5 positional loops,
+// forest↔beach crossfade by player position, muting/ducking.
 
 import { Audio, AudioListener } from 'three';
 import { gsap } from 'gsap';

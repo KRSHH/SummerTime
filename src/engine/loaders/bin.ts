@@ -1,11 +1,8 @@
-// The site's custom binary geometry format (.bin):
-//
-//   bytes [0..9]   : JSON header length, ASCII decimal
-//   bytes [10..10+n] : JSON header, e.g. {"type":0,"attributes":[["position",7],...],"userData":{...}}
-//   bytes [10+n..] : Draco-compressed geometry payload
-//
-// Type ids in the header map to TypedArray constructors (7 = Float32Array,
-// 4 = Uint16Array, ...). Type 0 files are meshes, type 1 files are data
+// The site's .bin geometry format:
+//   [0..9]      JSON header length (ASCII decimal)
+//   [10..10+n]  JSON header, e.g. {"type":0,"attributes":[["position",7],...]}
+//   [10+n..]    Draco payload
+// Type ids → TypedArray (7=Float32, 4=Uint16...); type 0 = meshes, type 1 = data
 // geometries (bones, animation frames, instance patches, curves).
 
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';

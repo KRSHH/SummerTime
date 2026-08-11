@@ -1,9 +1,6 @@
-// Pointer/multi-touch input system. Port of the original `initTouches` +
-// `touch` classes: pointer events are routed into N "touch" slots that
-// expose position (px), position01 (0..1, y-up), position11 (-1..1),
-// delta, dragged, velocity and swipe velocity, and emit bus events:
-//   touch_start / touch_move / touch_drag / touch_end / touch_click
-//   touch2_* ... (one eventID per finger slot)
+// Pointer/multi-touch input (port of `initTouches`/`touch`): routes pointer
+// events into N slots exposing position/delta/velocity/swipe, emitting
+// `touch_start|move|drag|end|click` (+ `touch2_*`) per finger.
 
 import { Vector2 } from 'three';
 import { events } from '../core/events';

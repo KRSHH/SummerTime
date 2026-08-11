@@ -1,4 +1,4 @@
-// Trees, bushes, palms, rocks and grass: instanced patches with LOD levels.
+// Trees, bushes, palms, rocks, grass: instanced patches with LOD.
 
 import { geometryLoader } from '../engine/loaders/geometries';
 import { makeGeometryLOD, LODExtended } from './helpers';

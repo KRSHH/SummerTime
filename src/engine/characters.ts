@@ -1,8 +1,6 @@
-// Instanced skinned character system. Port of the original
-// `characterSkinnedMesh` + `characters$1`: up to 128 characters sharing one
-// skinned mesh, per-instance bone matrices baked into a texture atlas,
-// blended animation clips (idle/run/air/bored), local player physics +
-// controls, and networked remote characters via the realm connection.
+// Instanced skinned character system (port of `characterSkinnedMesh` +
+// `characters$1`): up to 128 characters on one skinned mesh, per-instance
+// bone matrices in a texture, blended clips, local player + networked remotes.
 
 import {
   AnimationClip,
@@ -176,8 +174,9 @@ export class CharacterSkinnedMesh extends InstancedMesh {
     (this.skeleton as any).update = () => {};
   }
 
-  /** Update animation weights + write bone matrices for one character instance. */
-  _updateAnimations(local: CharacterLocal, inView: boolean, frameLerp: number) {
+  /** Bake bone matrices for one instance. All instances are baked every frame:
+   *  the mesh always renders, so skipping a remote leaves its pose frozen. */
+  _updateAnimations(local: CharacterLocal, frameLerp: number) {
     const weights = local.animationWeights;
     const speedFactor = fit(local.velocityHorizontal, 0.001, 0.045, 1, 0);
     weights[0] = secureLerp(lerp(weights[0], speedFactor, frameLerp));
@@ -185,10 +184,6 @@ export class CharacterSkinnedMesh extends InstancedMesh {
     for (let i = 2; i < weights.length; i++) {
       const active = local.userData.a === i - 1;
       weights[i] = secureLerp(lerp(weights[i], active ? 1 : 0, frameLerp));
-    }
-
-    if (local.instanceID !== 0 && (!inView || local.position.distanceTo(this._localObject.position) > 100)) {
-      return;
     }
 
     this.actions.forEach((action, i) => {
@@ -359,6 +354,9 @@ export class Characters extends CharacterSkinnedMesh {
     }
 
     if (this._camera.isPerspectiveCamera) {
+      // matrixWorld/matrixWorldInverse refresh after this callback; force them
+      // current so the frustum matches this frame's camera, not last frame's.
+      this._camera.updateMatrixWorld();
       this._m0.multiplyMatrices(this._camera.projectionMatrix, this._camera.matrixWorldInverse);
       this._f0.setFromProjectionMatrix(this._m0);
     }
@@ -409,7 +407,7 @@ export class Characters extends CharacterSkinnedMesh {
       this._customAttribUpdate?.(remote, id, instance, visible, animLerp);
       remote.updateMatrix();
       this.setMatrixAt(instance++, remote.matrix);
-      this._updateAnimations(remote, visible, animLerp);
+      this._updateAnimations(remote, animLerp);
     });
     this.instanceMatrix.needsUpdate = true;
     this.skeleton.boneTexture.needsUpdate = true;

@@ -1,11 +1,7 @@
-// Final image composition: the environment is rendered into a render target
-// and drawn as a fullscreen triangle through one of two shaders:
-//
+// Final image composition: environment → render target → fullscreen triangle.
 //  - introShader (state 0): LUT grade + crossfade from the intro photo
-//  - baseShader  (state 1):  LUT grade + white overlay flash
-//
-// Shader GLSL is verbatim from the original (3D LUT with tetrahedral
-// interpolation).
+//  - baseShader  (state 1): LUT grade + white overlay flash
+// GLSL is verbatim from the original (3D LUT, tetrahedral interpolation).
 
 import { Color, ShaderMaterial } from 'three';
 import { textureLoader } from '../engine/loaders/textures';

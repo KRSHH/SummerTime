@@ -1,7 +1,5 @@
-// Base scene: owns the follow camera, runs a warm-up "upload pass" that
-// forces every material/texture into the GPU before the first visible frame,
+// Base scene (port of `scene`): owns the follow camera, a warm-up upload pass,
 // and drives the camera + per-frame callbacks from updateMatrixWorld.
-// Port of the original `scene` class.
 
 import {
   Scene,

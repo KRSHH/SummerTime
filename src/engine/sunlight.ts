@@ -1,8 +1,6 @@
-// The sun: a directional light that follows the camera and renders a custom
-// cascaded shadow map (CSM) into LOD-level render targets, wired into every
-// material's `csmMap`/`csmMatrix`/`csmOptions`/`csmTarget` uniforms (the
-// fragment shader blends them in, see materials.ts). Port of the original
-// `followCSMLight`.
+// The sun (port of `followCSMLight`): camera-following directional light with
+// a custom cascaded shadow map (CSM) into LOD-level targets, blended in
+// materials via `csmMap`/`csmMatrix`/... uniforms.
 
 import {
   Color,

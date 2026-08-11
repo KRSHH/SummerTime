@@ -1,6 +1,5 @@
-// Texture loading with caching, format detection and fallbacks. Port of the
-// original `textureLoader`: one cache keyed by `file<>mode`, KTX2 (Basis)
-// via three's KTX2Loader, plus bitmap/exr/svg/video/image formats.
+// Texture loading with caching/fallbacks (port of `textureLoader`): one cache
+// keyed by `file<>mode`, KTX2 (Basis) + bitmap/exr/svg/video/image.
 
 import {
   CompressedTexture,
