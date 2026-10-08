@@ -4,18 +4,14 @@ name: build-wasm
 # code (or the build pipeline itself) changes. Vercel then deploys the
 # committed package without needing any Rust toolchain.
 #
-# Trigger: every push to main touching the Rust part — not per commit
-# (path-filtered) and no releases/tags. `workflow_dispatch` allows a manual
-# rebuild at any time.
+# Trigger: EVERY push to main — not path-filtered. Vercel Deployment Checks
+# gate production deploys on this workflow's check, so it must always
+# conclude: when no wasm inputs changed, the job skips the build and reports
+# success in seconds. `workflow_dispatch` allows a manual rebuild at any time.
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'multiplayer/**'
-      - '.github/workflows/build-wasm.yml'
-      - 'scripts/build-wasm.sh'
-      - 'package.json'
   workflow_dispatch:
 
 concurrency:
@@ -31,13 +27,39 @@ jobs:
   build:
     name: Build and publish wasm package
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history so the changed-files diff works for any push shape.
+          fetch-depth: 0
+
+      - name: Check whether wasm inputs changed
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          base="${{ github.event.before }}"
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git diff --quiet "$base" "${{ github.sha }}" -- multiplayer scripts/build-wasm.sh package.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: No wasm inputs changed
+        if: steps.changes.outputs.changed == 'false'
+        run: echo "Nothing under multiplayer/ changed; the committed wasm package is current."
 
       # Pin the exact toolchain used locally (1.96.0) so CI and local builds
       # are byte-comparable; bump deliberately when the local toolchain moves.
       - name: Install Rust toolchain (wasm32 target)
+        if: steps.changes.outputs.changed == 'true'
         uses: dtolnay/rust-toolchain@1.96.0
         with:
           targets: wasm32-unknown-unknown
@@ -47,11 +69,13 @@ jobs:
       # The key covers the Cargo.lock hash and toolchain, so it stays warm
       # across pushes and invalidates exactly when the inputs change.
       - name: Cache cargo registry and build artifacts
+        if: steps.changes.outputs.changed == 'true'
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: multiplayer
 
       - name: Install wasm-pack (pinned prebuilt binary)
+        if: steps.changes.outputs.changed == 'true'
         uses: jetli/wasm-pack-action@v0.4.0
         with:
           wasm-pack-version: '0.15.0'
@@ -62,6 +86,7 @@ jobs:
       # toolchain and guarantee the unversioned tool names (distro packaging
       # version-suffixes them, e.g. wasm-ld-18).
       - name: Ensure C toolchain for wasm (clang, llvm-ar, wasm-ld)
+        if: steps.changes.outputs.changed == 'true'
         run: |
           if ! command -v clang >/dev/null 2>&1 || ! command -v llvm-ar >/dev/null 2>&1 || ! command -v wasm-ld >/dev/null 2>&1; then
             sudo apt-get update
@@ -77,11 +102,13 @@ jobs:
           wasm-ld --version | head -1
 
       - name: Build the wasm package
+        if: steps.changes.outputs.changed == 'true'
         run: bash scripts/build-wasm.sh
 
       # Publish: commit the refreshed pkg back to main (pushes made with
       # GITHUB_TOKEN do not re-trigger this workflow, so no loops).
       - name: Publish the refreshed package
+        if: steps.changes.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
