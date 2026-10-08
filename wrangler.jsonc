@@ -1,0 +1,26 @@
+{
+  // Cloudflare Workers static assets: the Vite build in ./dist is uploaded
+  // as-is (three pages + public/ files). _redirects/_headers inside the
+  // asset directory define the /r and /play card URLs; requests served
+  // entirely from static assets are free and unlimited.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "summertime",
+  "compatibility_date": "2026-10-08",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./dist",
+    // Exact paths only: /card.html and /play.html must serve without a
+    // redirect, otherwise the _redirects proxies (/r -> /card.html,
+    // /play -> /play.html) bounce in a loop against the default
+    // auto-trailing-slash handling.
+    "html_handling": "none"
+  },
+  "routes": [
+    {
+      // Production domain (zone krshh.com is on this account; wrangler
+      // creates/updates the DNS record and certificate automatically).
+      "pattern": "summertime.krshh.com",
+      "custom_domain": true
+    }
+  ]
+}

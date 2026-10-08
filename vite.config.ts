@@ -6,8 +6,9 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 
 /**
  * Serves the clean card URLs (/r and /play) in `vite dev` and `vite preview`,
- * mirroring the rewrites in vercel.json. The X player card only ever sees the
- * production URLs; this keeps local testing on exactly the same ones.
+ * mirroring the `_redirects` rules the site ships for Cloudflare. The X player
+ * card only ever sees the production URLs; this keeps local testing on exactly
+ * the same ones.
  */
 function cardUrls(): Plugin {
   const routes: Record<string, string> = {

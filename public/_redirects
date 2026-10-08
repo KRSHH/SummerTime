@@ -1,0 +1,9 @@
+# X (Twitter) player card URLs. The posted link opens the card page; the
+# embedded player is the same app under /play. Status 200 = rewrite, so the
+# URL in the browser (and in X's iframe) stays exactly as posted.
+
+/ /index.html 200
+/r /card.html 200
+/r/ /card.html 200
+/play /play.html 200
+/play/ /play.html 200

@@ -24,7 +24,14 @@ bun run dev        # http://localhost:5173
 bun run build      # tsc -b && vite build → dist/
 bun run preview    # serve the production build
 bun run typecheck  # tsc -b --noEmit
+bun run deploy     # build + upload to Cloudflare (wrangler deploy)
 ```
+
+Hosted on **Cloudflare Workers static assets** (`wrangler.jsonc`): `bun run
+deploy` uploads `dist/` as the `summertime` worker, which owns the custom
+domain `summertime.krshh.com`. Static asset requests are free and unlimited.
+Pushing to `main` deploys too via `.github/workflows/deploy.yml` once the
+`CLOUDFLARE_API_TOKEN` repository secret is set.
  
 
 ## From the original to this port
@@ -103,7 +110,7 @@ How it works:
 
 The Rust workspace lives in `multiplayer/` (`shared` = room logic,
 `browser-wasm` = wasm-bindgen wrapper, `cli` = native tester). The compiled
-wasm package is committed at `multiplayer/browser-wasm/pkg/` so Vercel deploys
+wasm package is committed at `multiplayer/browser-wasm/pkg/` so Cloudflare deploys
 never need a Rust toolchain. **Rebuilding is handled by CI** (`.github/workflows/build-wasm.yml`): it runs on every push that touches `multiplayer/**`
 (or the build pipeline) with full caching, and commits the refreshed pkg back
 to `main` — no releases or tags involved. Locally, `bun run build:wasm`
@@ -127,11 +134,12 @@ in the timeline instead of opening a new tab:
   together.
 
 Wiring: `vite.config.ts` builds all three pages (multi-page input) and serves
-the clean `/r` and `/play` URLs in dev/preview; `vercel.json` rewrites the
-same URLs in production and sends `CSP frame-ancestors` allowing x.com /
-twitter.com to frame the player (`no-store` keeps the card markup fresh).
-`public/robots.txt` allows Twitterbot; `public/card.jpg` (1080×1080) is the
-fallback image, versioned in the tags as `card.jpg?v=1`.
+the clean `/r` and `/play` URLs in dev/preview; on Cloudflare, `public/_redirects`
+rewrites the same URLs in production and `public/_headers` sends `CSP
+frame-ancestors` allowing x.com / twitter.com to frame the player (`no-store`
+keeps the card markup fresh). `public/robots.txt` allows Twitterbot;
+`public/card.jpg` (1080×1080) is the fallback image, versioned in the tags as
+`card.jpg?v=1`.
 
 To post it: paste `https://summertime.krshh.com/r` into a post on x.com
 desktop and open the permalink. If X renders the card, the post shows the

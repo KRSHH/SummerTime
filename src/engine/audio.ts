@@ -10,8 +10,9 @@ import { engine } from './globals';
 import { ease, fit } from '../core/math';
 import type { BaseScene } from './scene';
 
-const AUDIO_URL = 'assets/audio/';
-const assetUrl = (file: string) => new URL(AUDIO_URL + file, window.location.href).toString();
+// Root-absolute: the same URL must work from the site root and from /play.
+const AUDIO_URL = '/assets/audio/';
+const assetUrl = (file: string) => AUDIO_URL + file;
 
 /** three.js Audio extended with a loop offset for GSAP-synced looping. */
 export class LoopAudio extends Audio {

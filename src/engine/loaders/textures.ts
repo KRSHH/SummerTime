@@ -27,7 +27,10 @@ export interface LoadedTexture extends Texture {
   _loaded: Deferred<void>;
 }
 
-const asset = (path: string) => new URL(path, window.location.href).toString();
+// Root-absolute so the loader works identically from the site root and from
+// pages below it (e.g. /play), where a relative URL would resolve to
+// /play/assets/... and 404.
+const asset = (path: string) => new URL(path, window.location.origin + '/').toString();
 const ktx2Loader = new KTX2Loader().setTranscoderPath(asset('assets/libs/basis/'));
 const imageLoader = new ThreeTextureLoader();
 const exrLoader = new EXRLoader();

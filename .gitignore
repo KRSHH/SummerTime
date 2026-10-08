@@ -95,6 +95,12 @@ dist
 multiplayer/target/
 multiplayer/**/target/
 
+# Wrangler local state (Cloudflare deploys)
+.wrangler/
+
+# OpenChamber tooling artifacts (screenshots, etc.)
+.openchamber/
+
 # Gatsby files
 .cache/
 # Comment in the public line in if your project uses Gatsby and not Next.js

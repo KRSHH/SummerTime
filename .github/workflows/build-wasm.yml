@@ -1,13 +1,12 @@
 name: build-wasm
 
 # Rebuilds and publishes the P2P wasm package whenever the Rust multiplayer
-# code (or the build pipeline itself) changes. Vercel then deploys the
-# committed package without needing any Rust toolchain.
+# code (or the build pipeline itself) changes. The Cloudflare deploy then
+# uploads the committed package without needing any Rust toolchain.
 #
-# Trigger: EVERY push to main — not path-filtered. Vercel Deployment Checks
-# gate production deploys on this workflow's check, so it must always
-# conclude: when no wasm inputs changed, the job skips the build and reports
-# success in seconds. `workflow_dispatch` allows a manual rebuild at any time.
+# Trigger: EVERY push to main — not path-filtered. The job always concludes:
+# when no wasm inputs changed it skips the build and reports success in
+# seconds. `workflow_dispatch` allows a manual rebuild at any time.
 
 on:
   push:

@@ -33,7 +33,8 @@ function initLoad<T>(key: string, load: () => Promise<T>): Promise<T> {
 const createFallbackGeometry = () => { const g = new BoxGeometry(1, 1, 1); (g as any)._fallback = true; return g; };
 
 async function loadBin(url: string): Promise<GeometryWithData> {
-  const response = await fetch(new URL('assets/geometries/' + url, window.location.href));
+  // Root-absolute: the same URL must work from the site root and from /play.
+  const response = await fetch('/assets/geometries/' + url);
   if (!response.ok) throw new Error(`${url} could not be loaded (${response.status})`);
   const buffer = await response.arrayBuffer();
   const { header, payload } = parseBin(buffer);

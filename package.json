@@ -9,6 +9,7 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --noEmit",
     "preview": "vite preview",
+    "deploy": "bun run build && bunx wrangler deploy",
     "build:wasm": "bash scripts/build-wasm.sh"
   },
   "dependencies": {

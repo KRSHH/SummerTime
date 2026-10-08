@@ -33,7 +33,7 @@ html body #app {
 }
 @font-face {
   font-family: Stylish;
-  src: url(assets/fonts/Stylish-Regular.woff2) format('woff2'), url(assets/fonts/Stylish-Regular.woff) format('woff');
+  src: url(/assets/fonts/Stylish-Regular.woff2) format('woff2'), url(/assets/fonts/Stylish-Regular.woff) format('woff');
   font-weight: 400;
   font-style: normal;
   font-display: swap;

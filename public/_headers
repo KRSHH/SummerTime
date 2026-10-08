@@ -1,0 +1,23 @@
+# Card + player pages must never be cached by the browser or by X's crawler.
+/r
+  Cache-Control: no-store
+/r/
+  Cache-Control: no-store
+/card.html
+  Cache-Control: no-store
+
+# The player page may only be framed by X/Twitter (frame-ancestors) and must
+# always be fresh.
+/play
+  Content-Security-Policy: frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com
+  Cache-Control: no-store
+/play/
+  Content-Security-Policy: frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com
+  Cache-Control: no-store
+/play.html
+  Content-Security-Policy: frame-ancestors 'self' https://x.com https://*.x.com https://twitter.com https://*.twitter.com
+  Cache-Control: no-store
+
+# Preview image is immutable; bump the ?v= in the meta tags to change it.
+/card.jpg
+  Cache-Control: public, max-age=31536000, immutable
