@@ -113,6 +113,39 @@ and clang/LLVM for the wasm target; both the script and the workflow share
 `cargo run -p summer-cli --release` inside `multiplayer/` — two instances
 will discover each other exactly like two browser tabs.
 
+## Playable on X (Twitter)
+
+The site ships an X **Player Card**, so a post can run the experience inline
+in the timeline instead of opening a new tab:
+
+- **Posted link** — `https://summertime.krshh.com/r` (`card.html`): a small
+  page whose raw HTML carries the `twitter:card = player` tags. X's crawler
+  never runs JavaScript, so the tags live there and nowhere else.
+- **Embedded player** — `https://summertime.krshh.com/play/` (`play.html`):
+  the full-bleed page X loads in a 480×480 iframe. It boots the same app as
+  the main site and joins the same P2P room, so everyone in the embed plays
+  together.
+
+Wiring: `vite.config.ts` builds all three pages (multi-page input) and serves
+the clean `/r` and `/play` URLs in dev/preview; `vercel.json` rewrites the
+same URLs in production and sends `CSP frame-ancestors` allowing x.com /
+twitter.com to frame the player (`no-store` keeps the card markup fresh).
+`public/robots.txt` allows Twitterbot; `public/card.jpg` (1080×1080) is the
+fallback image, versioned in the tags as `card.jpg?v=1`.
+
+To post it: paste `https://summertime.krshh.com/r` into a post on x.com
+desktop and open the permalink. If X renders the card, the post shows the
+480×480 player — click it to play. There is no approval step to submit
+anymore (the Card Validator was retired and a valid card has been enough
+since 2018), but X still decides what it iframes. Notes from testing on X:
+
+- X caches card markup for about a week — bump the URL (`/r?v=2`) when
+  retesting after a change.
+- Inline play is the desktop web behavior; the iOS/Android apps show the
+  preview image and open the player in X's in-app browser.
+- If the card never renders, the only channel left is the Cards section of
+  the X developer forum or `docs.x.com/support`.
+
 ## Architecture
 
 **Boot flow**, `index.html` → `src/main.ts`: UA sniffing, WebGL2 capability

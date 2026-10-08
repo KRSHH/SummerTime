@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#fffdf8" />
+    <title>SummerTime</title>
+
+    <!--
+      X (Twitter) Player Card. This is the page the posted link opens to
+      (summertime.krshh.com/r). X's crawler reads these tags from the raw
+      HTML — it never runs JavaScript — then embeds twitter:player in a
+      480x480 iframe directly in the timeline. Keep this page separate from
+      the player URL and free of redirects so the tags stay readable.
+    -->
+    <meta name="twitter:card" content="player" />
+    <meta name="twitter:title" content="SummerTime" />
+    <meta name="twitter:description" content="Everyone who opens this embed plays in the same world." />
+    <meta name="twitter:image" content="https://summertime.krshh.com/card.jpg?v=1" />
+    <meta name="twitter:player" content="https://summertime.krshh.com/play/" />
+    <meta name="twitter:player:width" content="480" />
+    <meta name="twitter:player:height" content="480" />
+
+    <!-- Open Graph fallback for the rest of the web -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SummerTime" />
+    <meta property="og:description" content="Everyone who opens this embed plays in the same world." />
+    <meta property="og:image" content="https://summertime.krshh.com/card.jpg?v=1" />
+    <meta property="og:url" content="https://summertime.krshh.com/r" />
+
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon16.png" />
+    <style>
+      @font-face {
+        font-family: Stylish;
+        src: url(/assets/fonts/Stylish-Regular.woff2) format('woff2');
+        font-display: swap;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; background: #fffdf8; }
+      .card { display: block; position: relative; width: 100%; height: 100%; overflow: hidden; }
+      .card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+      .play {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) rotate(10deg);
+        font-family: Stylish, sans-serif;
+        font-size: 30px;
+        line-height: 1;
+        color: #716c66;
+        padding: 18px 34px 20px;
+        border-radius: 8px;
+        background-color: #f9efdc;
+        box-shadow: 3px 3px #716c66;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .play:hover { transform: translate(-50%, -50%) rotate(10deg) translateY(-2px); }
+      .play:active { transform: translate(-50%, -50%) rotate(10deg) translateY(2px); box-shadow: 1px 1px #716c66; }
+    </style>
+  </head>
+  <body>
+    <a class="card" href="/play/" aria-label="Play SummerTime">
+      <img src="/card.jpg" alt="SummerTime — a kid in a straw hat walking down a sunny street" />
+      <span class="play">Play</span>
+    </a>
+  </body>
+</html>

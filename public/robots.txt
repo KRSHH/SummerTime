@@ -1,0 +1,7 @@
+# X (Twitter) card crawler must be able to fetch /r and /play for player cards.
+User-agent: Twitterbot
+Allow: /
+
+# Everything else: the site is public.
+User-agent: *
+Allow: /
